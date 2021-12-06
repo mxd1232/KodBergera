@@ -1,7 +1,0 @@
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\obj\Debug\BergersCode.csprojAssemblyReference.cache
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\obj\Debug\BergersCode.csproj.CoreCompileInputs.cache
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\bin\Debug\BergersCode.exe.config
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\bin\Debug\BergersCode.exe
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\bin\Debug\BergersCode.pdb
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\obj\Debug\BergersCode.exe
-C:\Users\Mikołaj\source\repos\BergersCode\BergersCode\obj\Debug\BergersCode.pdb
