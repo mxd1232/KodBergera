@@ -13,38 +13,46 @@ using System.IO;
 
 namespace Server
 {
-    public partial class Form1 : Form
+    public partial class Server : Form
     {
+        private TcpListener listener;
         private TcpClient client;
         public StreamReader STR;
         public StreamWriter STW;
         public string recieve;
         public String TextToSend;
-        public Form1()
-        {
-            InitializeComponent();
-            IPAddress[] localIP = Dns.GetHostAddresses(Dns.GetHostName());
+        public int Port { get; set; }
 
-            foreach (IPAddress address in localIP)
+        public Server(int port)
+        {
+            Port = port;
+            InitializeComponent();
+
+            IPLabel.Text = "Ip: " + Addresses.IpAddress;
+            PortLabel.Text = "Port: " + port;
+
+            foreach (var connection in Addresses.GetConnections(Port))
             {
-                if (address.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    txtIP.Text = address.ToString();
-                }
-            }         
+                Connections.Items.Add(connection);
+            }
+
+            List<List<int>> AllPaths = Addresses.FindAllPaths(Port, 8);
+            List<int> shortestPath = Addresses.FindShortestPath(Port, 8);
+
+            StartListening();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            
         }
 
-        private async void btnStart_ClickAsync(object sender, EventArgs e)
+        private async void StartListening()
         {
             try
             {
-                lblStatus.Text = "starting";
-                TcpListener listener = new TcpListener(IPAddress.Any, int.Parse(txtPort.Text));
+                lblStatus.Text = "starting"; 
+                listener = new TcpListener(IPAddress.Parse(Addresses.IpAddress), Port);
                 listener.Start();
                 client = await listener.AcceptTcpClientAsync();
                 STR = new StreamReader(client.GetStream());
@@ -53,23 +61,54 @@ namespace Server
 
                 backgroundWorker1.RunWorkerAsync();
                 backgroundWorker2.WorkerSupportsCancellation = true;
-                lblStatus.Text = "connected";
-                txtLogs.Text += "Server Connected\n";
+                lblStatus.Text = "";
+                txtLogs.Text += "";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 lblStatus.Text = "Error";
-                txtLogs.Text += "Server could not connect\n>>>"+ex.Message.ToString()+"\n";
-
+                txtLogs.Text += "Server could not connect\n>>>" + ex.Message.ToString() + "\n";
             }
+        }
 
-            
-        }    
-        private void btnStop_Click(object sender, EventArgs e)
+        private void SendMessage(int port)
+        {
+            client = new TcpClient();
+            IPEndPoint IpEnd = new IPEndPoint(IPAddress.Parse(Addresses.IpAddress), port);
+
+            try
+            {
+                client.Connect(IpEnd);
+
+                if (client.Connected)
+                {
+                    txtLogs.AppendText("" + "\n");
+                    STW = new StreamWriter(client.GetStream());
+                    STR = new StreamReader(client.GetStream());
+                    STW.AutoFlush = true;
+                    backgroundWorker1.RunWorkerAsync();
+                    backgroundWorker2.WorkerSupportsCancellation = true;
+                    txtLogs.Text += "";
+                    lblStatus.Text = "";
+
+                }
+                else
+                {
+                    txtLogs.Text += "Client did not connect\n";
+                }
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Error";
+                txtLogs.Text += "Client could not connect\n>>>" + ex.Message.ToString() + "\n";
+            }
+        }
+
+        private void StopConnection()
         {
             try
             {
-                TcpListener listener = new TcpListener(IPAddress.Any, int.Parse(txtPort.Text));
+               // TcpListener listener = new TcpListener(IPAddress.Parse(Addresses.IpAddress), Port);
                 listener.Stop();
                 client = listener.AcceptTcpClient();
                 STR = new StreamReader(client.GetStream());
@@ -78,15 +117,15 @@ namespace Server
 
                 backgroundWorker1.CancelAsync();
                 backgroundWorker2.WorkerSupportsCancellation = false;
-                txtLogs.Text += "Server disConnected\n";
+                txtLogs.Text += "";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 lblStatus.Text = "Error";
-                txtLogs.Text += "Server could not disconnect\n>>>"+ex.Message.ToString()+"\n";
+                txtLogs.Text += "Server could not disconnect\n>>>" + ex.Message.ToString() + "\n";
 
             }
-}
+        }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -96,14 +135,22 @@ namespace Server
 
         private void btnSend_Click(object sender, EventArgs e)
         {
-
-            if (txtMSG.Text != "")
+            if (txtMSG.Text != "" && txtPort.Text != "")
             {
-                TextToSend = txtMSG.Text;
-                backgroundWorker2.RunWorkerAsync();
+                int destinationPort = Convert.ToInt32(txtPort.Text);
+                if (destinationPort > 0 && destinationPort < 9)
+                {
+                    SendMessage(destinationPort);
+                    TextToSend = txtMSG.Text;
+                    backgroundWorker2.RunWorkerAsync();
+
+                    backgroundWorker2.CancelAsync();
+                }
+
             }
             txtMSG.Text = "";
         }
+
 
         private void backgroundWorker2_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -112,11 +159,10 @@ namespace Server
                 STW.WriteLine(TextToSend);
                 this.txtLogs.Invoke(new MethodInvoker(delegate ()
                 {
-                    txtLogs.AppendText("Me:" + TextToSend + "\n");
+                    txtLogs.AppendText(TextToSend + "\n");
                     lblStatus.Text = "connected - sent";
                 }));
             }
-            backgroundWorker2.CancelAsync();
         }
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -127,7 +173,7 @@ namespace Server
                     recieve = STR.ReadLine();
                     this.txtLogs.Invoke(new MethodInvoker(delegate ()
                     {
-                        txtLogs.AppendText("You:" + recieve + "\n");
+                        txtLogs.AppendText(recieve + "\n");
                         lblStatus.Text = "connected";
                     }));
                     recieve = "";
@@ -138,11 +184,6 @@ namespace Server
                     txtLogs.Text += "Server could not connect\n>>>" + ex.Message.ToString() + "\n";
                 }
             }
-        }
-
-        private void connectButton_Click(object sender, EventArgs e)
-        {
-            Connections.Items.Add((connectIP.Text + "/" + connectPort.Text));
         }
     }
 }
