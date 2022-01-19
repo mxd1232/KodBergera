@@ -5,6 +5,37 @@ namespace BergerAlgorithm
 {
     public static class BergerHelper
     {
+        public static int[] ConvertShortToBinary(short number)
+        {
+            List<int> binaryList = new List<int>();
+
+            int remainder;
+            while (number>0)
+            {
+               remainder =  number % 2;
+               binaryList.Add(remainder);
+               number /= 2;
+            }
+
+            return FillBinaryTable(binaryList);
+        }
+
+        private static int[] FillBinaryTable(List<int> binaryList)
+        {
+            if (binaryList.Count > 16)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            int[] binaryFinal = new int[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+            for (int i = 0; i < binaryList.Count; i++)
+            {
+                binaryFinal[15 - i] = binaryList[i];
+            }
+
+            return binaryFinal;
+        }
         public static bool CheckBergersCode(int[] bytes)
         {
             if (bytes.Length != 20)

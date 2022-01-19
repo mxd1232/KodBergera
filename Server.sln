@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BergerTests", "BergerTests\BergerTests.csproj", "{C4FF1229-7FD6-4098-87A6-F103D8D562E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BergerAlgorithm", "BergerAlgorithm\BergerAlgorithm.csproj", "{11980DED-D49E-4F2C-BB3D-56555DEAB9DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BergerBackend", "BergerBackend\BergerBackend.csproj", "{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{C4FF1229-7FD6-4098-87A6-F103D8D562E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4FF1229-7FD6-4098-87A6-F103D8D562E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4FF1229-7FD6-4098-87A6-F103D8D562E0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{11980DED-D49E-4F2C-BB3D-56555DEAB9DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11980DED-D49E-4F2C-BB3D-56555DEAB9DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11980DED-D49E-4F2C-BB3D-56555DEAB9DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11980DED-D49E-4F2C-BB3D-56555DEAB9DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

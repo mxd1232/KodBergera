@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BergerAlgorithm\BergerAlgorithm.csproj" />
+    <ProjectReference Include="..\BergerBackend\BergerBackend.csproj" />
   </ItemGroup>
 
 </Project>

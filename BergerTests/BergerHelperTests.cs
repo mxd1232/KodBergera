@@ -1,5 +1,5 @@
-using BergerAlgorithm;
 using System;
+using BergerBackend;
 using Xunit;
 
 namespace BergerTests
@@ -38,11 +38,30 @@ namespace BergerTests
 
             Assert.Throws<ArgumentException>(() => BergerHelper.CheckBergersCode(input));
         }  
+        //[Fact]
+        //public void WrongLengthCodeBergersThrowsArgumentException()
+        //{
+        //    int[] input = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+        //    Assert.Throws<ArgumentException>(() => BergerHelper.CodeBerger(input));
+        //}
         [Fact]
-        public void WrongLengthCodeBergersThrowsArgumentException()
+        public void ConvertNumberToBinaryReturnsProperArray()
         {
-            int[] input = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-            Assert.Throws<ArgumentException>(() => BergerHelper.CodeBerger(input));
+           
+            int[] tenInBinary = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,0,1,0};
+
+            int[] result = BergerHelper.ConvertShortToBinary(10);
+
+            Assert.Equal(tenInBinary,result);
+        }
+        [Fact]
+        public void CodeBinaryToBergerReturnsProperArray()
+        {
+            int[] expectedResult = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0 };
+
+            int[] result = BergerHelper.CodeBerger(10);
+
+            Assert.Equal(expectedResult, result);
         }
     }
 }

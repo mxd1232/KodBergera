@@ -89,5 +89,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BergerBackend\BergerBackend.csproj">
+      <Project>{ADDE9042-5C6F-4135-9314-F51A4CCC9A5F}</Project>
+      <Name>BergerBackend</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
