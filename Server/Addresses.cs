@@ -49,6 +49,8 @@ namespace Server
                 }
             }
 
+            shortestPath.RemoveAt(0);
+
             return shortestPath;
         }
 

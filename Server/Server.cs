@@ -23,6 +23,7 @@ namespace Server
         public string recieve;
         public String TextToSend;
         public int Port { get; set; }
+        public string PortsPath { get; set; }
 
         public Server(int port)
         {
@@ -37,12 +38,26 @@ namespace Server
                 Connections.Items.Add(connection);
             }
 
-            List<List<int>> AllPaths = Addresses.FindAllPaths(Port, 8);
-            List<int> shortestPath = Addresses.FindShortestPath(Port, 8);
-
+            Console.WriteLine("Port:" + Port);
+            
             StartListening();
         }
 
+        private string getPath(List<int> path)
+        {
+            string paths = "[";
+
+            foreach (var i in path)
+            {
+                paths += i;
+                paths += ',';
+            }
+
+            paths = paths.Remove(paths.Length - 1);
+            paths += ']';
+
+            return paths;
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             
@@ -77,6 +92,7 @@ namespace Server
             client = new TcpClient();
             IPEndPoint IpEnd = new IPEndPoint(IPAddress.Parse(Addresses.IpAddress), port);
 
+            PortsPath = getPath(Addresses.FindShortestPath(Port, port));
             try
             {
                 client.Connect(IpEnd);
@@ -88,7 +104,7 @@ namespace Server
                     STR = new StreamReader(client.GetStream());
                     STW.AutoFlush = true;
 
-                    backgroundWorker1.RunWorkerAsync();
+             //       backgroundWorker1.RunWorkerAsync();
                     backgroundWorker2.WorkerSupportsCancellation = true;
                     txtLogs.Text += "";
                     lblStatus.Text = "";
@@ -157,10 +173,12 @@ namespace Server
         {
             if (client.Connected)
             {
-                STW.WriteLine(TextToSend);
+                string message = PortsPath + TextToSend;
+
+                STW.WriteLine(message);
                 this.txtLogs.Invoke(new MethodInvoker(delegate ()
                 {
-                    txtLogs.AppendText(TextToSend + Environment.NewLine);
+                    txtLogs.AppendText(message + Environment.NewLine);
                     lblStatus.Text = "connected - sent";
                 }));
             }
@@ -172,6 +190,25 @@ namespace Server
                 try
                 {
                     recieve = STR.ReadLine();
+
+
+                    int iStart = recieve.IndexOf('[');
+                    int iEnd = recieve.IndexOf(']');
+
+                    string path = recieve.Substring(iStart, iEnd+1);
+
+                    if (path.Length != 3)
+                    {
+                        PortsPath = path.Remove(1, 2);
+                    }
+                    else
+                    {
+                        PortsPath = path.Remove(1, 1);
+                    }
+
+                    Console.WriteLine("Path: " + PortsPath);
+
+
                     this.txtLogs.Invoke(new MethodInvoker(delegate ()
                     {
                         txtLogs.AppendText(recieve + Environment.NewLine);
@@ -185,6 +222,7 @@ namespace Server
                     txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
                 }
             }
+
         }
 
         private void btnConvert_Click(object sender, EventArgs e)
