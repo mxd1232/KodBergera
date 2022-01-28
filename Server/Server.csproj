@@ -47,7 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Addresses.cs" />
-    <Compile Include="BitHelper.cs" />
     <Compile Include="Server.cs">
       <SubType>Form</SubType>
     </Compile>

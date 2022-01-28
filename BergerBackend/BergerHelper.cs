@@ -72,6 +72,24 @@ namespace BergerBackend
 
             return binaryFinal;
         }
+
+        public static int[] ConvertStringToBinary(string message)
+        {
+            int[] bytes = new int[20];
+
+            if (message.Length != 20)
+            {
+                throw new ArgumentException();
+            }
+
+            for (int i = 0; i < message.Length; i++)
+            {
+                bytes[i] = Int32.Parse(message[i].ToString());
+            }
+
+            return bytes;
+        }
+
         public static bool CheckBergersCode(int[] bytes)
         {
             if (bytes.Length != 20)

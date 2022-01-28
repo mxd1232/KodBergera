@@ -10,7 +10,7 @@ namespace Server
     public static class Addresses
     {
         public static string IpAddress = "127.0.0.1";
-        public static string MainPort = "1";
+        public static int MainPort = 1;
 
         public static List<int> GetConnections(int port)
         {

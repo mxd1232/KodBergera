@@ -23,12 +23,16 @@ namespace Server
         public string recieve;
         public String TextToSend;
         public int Port { get; set; }
-        public string PortsPath { get; set; }
+      //  public string PortsPath { get; set; }
 
         public Server(int port)
         {
+
             Port = port;
             InitializeComponent();
+
+            backgroundWorker1.WorkerSupportsCancellation = true;
+            backgroundWorker2.WorkerSupportsCancellation = true;
 
             IPLabel.Text = "Ip: " + Addresses.IpAddress;
             PortLabel.Text = "Port: " + port;
@@ -40,10 +44,15 @@ namespace Server
 
             Console.WriteLine("Port:" + Port);
             
+
+
+
             StartListening();
+
+
         }
 
-        private string getPath(List<int> path)
+        private string GetPathToString(List<int> path)
         {
             string paths = "[";
 
@@ -67,7 +76,7 @@ namespace Server
         {
             try
             {
-                lblStatus.Text = "starting"; 
+             //   lblStatus.Text = "starting"; 
                 listener = new TcpListener(IPAddress.Parse(Addresses.IpAddress), Port);
                 listener.Start();
                 client = await listener.AcceptTcpClientAsync();
@@ -76,9 +85,8 @@ namespace Server
                 STW.AutoFlush = true;
 
                 backgroundWorker1.RunWorkerAsync();
-                backgroundWorker2.WorkerSupportsCancellation = true;
-                lblStatus.Text = "";
-                txtLogs.Text += "";
+             //   lblStatus.Text = "";
+             //   txtLogs.Text += "";
             }
             catch (Exception ex)
             {
@@ -87,32 +95,51 @@ namespace Server
             }
         }
 
-        private void SendMessage(int port)
+        private async void ReListen()
+        {
+            try
+            {
+               //     listener = new TcpListener(IPAddress.Parse(Addresses.IpAddress), Port);
+            //    listener.Start();
+                client = await listener.AcceptTcpClientAsync();
+                STR = new StreamReader(client.GetStream());
+                STW = new StreamWriter(client.GetStream());
+                STW.AutoFlush = true;
+
+                if (backgroundWorker1.IsBusy)
+                {
+                    backgroundWorker1.CancelAsync();
+                }
+                backgroundWorker1.RunWorkerAsync();
+
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Error";
+                txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+            }
+        }
+
+        private void ConnectForSending(int port)
         {
             client = new TcpClient();
             IPEndPoint IpEnd = new IPEndPoint(IPAddress.Parse(Addresses.IpAddress), port);
+         //   PortsPath = GetPathToString(Addresses.FindShortestPath(Port, port));
 
-            PortsPath = getPath(Addresses.FindShortestPath(Port, port));
             try
             {
                 client.Connect(IpEnd);
 
                 if (client.Connected)
                 {
-                    txtLogs.AppendText("" + Environment.NewLine );
                     STW = new StreamWriter(client.GetStream());
                     STR = new StreamReader(client.GetStream());
                     STW.AutoFlush = true;
-
-             //       backgroundWorker1.RunWorkerAsync();
-                    backgroundWorker2.WorkerSupportsCancellation = true;
-                    txtLogs.Text += "";
-                    lblStatus.Text = "";
-
+                    
                 }
                 else
                 {
-                    txtLogs.Text += "Client did not connect" + Environment.NewLine;
+                 //   txtLogs.Text += "Client did not connect" + Environment.NewLine;
                 }
             }
             catch (Exception ex)
@@ -126,16 +153,7 @@ namespace Server
         {
             try
             {
-               // TcpListener listener = new TcpListener(IPAddress.Parse(Addresses.IpAddress), Port);
                 listener.Stop();
-                client = listener.AcceptTcpClient();
-                STR = new StreamReader(client.GetStream());
-                STW = new StreamWriter(client.GetStream());
-                STW.AutoFlush = false;
-
-                backgroundWorker1.CancelAsync();
-                backgroundWorker2.WorkerSupportsCancellation = false;
-                txtLogs.Text += "";
             }
             catch (Exception ex)
             {
@@ -147,33 +165,52 @@ namespace Server
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            backgroundWorker2.RunWorkerAsync();
+           // backgroundWorker2.RunWorkerAsync();
             //backgroundWorker2.WorkerSupportsCancellation = true;
         }
 
         private void btnSend_Click(object sender, EventArgs e)
         {
+
             if (txtMSG.Text != "" && txtPort.Text != "")
             {
                 int destinationPort = Convert.ToInt32(txtPort.Text);
-                if (destinationPort > 0 && destinationPort < 9)
+                if (destinationPort <= 0|| destinationPort >= 9)
                 {
-                    SendMessage(destinationPort);
-                    TextToSend = txtMSG.Text;
-                    backgroundWorker2.RunWorkerAsync();
-
-                    backgroundWorker2.CancelAsync();
+                    return;
                 }
 
+                string portsPath = GetPathToString(Addresses.FindShortestPath(Port, destinationPort));
+
+                int nextPort = GetFirstPort(portsPath);
+
+                if (nextPort <= 0 || nextPort >= 9)
+                {
+                    return;
+                }
+                ConnectForSending(nextPort);
+
+                SendMessage(portsPath+txtMSG.Text);
             }
             txtMSG.Text = "";
         }
 
+        private void SendMessage( string message)
+        {
+            //ConnectForSending(port);
+
+            TextToSend = message;
+
+            backgroundWorker2.RunWorkerAsync();
+            backgroundWorker2.CancelAsync();
+        }
+
+        //send
         private void backgroundWorker2_DoWork(object sender, DoWorkEventArgs e)
         {
             if (client.Connected)
             {
-                string message = PortsPath + TextToSend;
+                string message =  TextToSend;
 
                 STW.WriteLine(message);
                 this.txtLogs.Invoke(new MethodInvoker(delegate ()
@@ -182,7 +219,13 @@ namespace Server
                     lblStatus.Text = "connected - sent";
                 }));
             }
+
+      //    StopConnection();
+
+            ReListen();
         }
+
+        //recieve
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             while (client.Connected)
@@ -191,38 +234,90 @@ namespace Server
                 {
                     recieve = STR.ReadLine();
 
+                    string path = GetFullPathFromMessage(recieve);
+                    string nextPath = GetDestinationPath(path);
+                    //   PortsPath = nextPath;
 
-                    int iStart = recieve.IndexOf('[');
-                    int iEnd = recieve.IndexOf(']');
+                    string message = recieve.Substring(path.Length, (recieve.Length - path.Length));
 
-                    string path = recieve.Substring(iStart, iEnd+1);
+                    int[] bytes = BergerHelper.ConvertStringToBinary(message);
 
-                    if (path.Length != 3)
+                    if (BergerHelper.CheckBergersCode(bytes) == false)
                     {
-                        PortsPath = path.Remove(1, 2);
+                        this.txtLogs.Invoke(new MethodInvoker(delegate()
+                        {
+                            txtLogs.AppendText("wrong number of ones - berger code not correct");
+                        }));
+                        return;
                     }
-                    else
+
+                    this.txtLogs.Invoke(new MethodInvoker(delegate()
                     {
-                        PortsPath = path.Remove(1, 1);
-                    }
-
-                    Console.WriteLine("Path: " + PortsPath);
-
-
-                    this.txtLogs.Invoke(new MethodInvoker(delegate ()
-                    {
-                        txtLogs.AppendText(recieve + Environment.NewLine);
+                        txtLogs.AppendText("Recieved: [path]: " + nextPath + "[message]: " + message +
+                                           Environment.NewLine);
                         lblStatus.Text = "connected";
                     }));
                     recieve = "";
+
+                    int nextPort = GetFirstPort(nextPath);
+
+                    if (nextPort != -1)
+                    {
+                        ConnectForSending(nextPort);
+                        SendMessage(nextPath + message);
+                    }
+                    ReListen();
+                    return;
                 }
                 catch (Exception ex)
                 {
                     lblStatus.Text = "Error";
-                    txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+                    txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() +
+                                    Environment.NewLine;
                 }
             }
+        }
 
+        private string GetFullPathFromMessage(string message)
+        {
+            int iStart = message.IndexOf('[');
+            int iEnd = message.IndexOf(']');
+            string path = message.Substring(iStart, iEnd + 1);
+
+            return path;
+        }
+        private string GetDestinationPath(string path)
+        {
+            string nextPath;
+
+            if (path.Length != 3)
+            {
+                nextPath = path.Remove(1, 2);
+            }
+            else
+            {
+                nextPath = path.Remove(1, 1);
+            }
+
+            return nextPath;
+        }
+
+        private int GetDestinationPort(string path)
+        {
+            if (path.Length <3)
+            {
+                return -1;
+            }
+            else return int.Parse(path[path.Length-2].ToString());
+        }
+
+        private int GetFirstPort(string path)
+        {
+            if (path.Length < 3)
+            {
+                return -1;
+            }
+            else return int.Parse(path[1].ToString());
         }
 
         private void btnConvert_Click(object sender, EventArgs e)
@@ -238,9 +333,7 @@ namespace Server
                 string bergerText = BergerHelper.GetBergerString(berger);
 
                 txtMSG.Text = bergerText;
-
             }
-
         }
 
         private void btnNegateOneBit_Click(object sender, EventArgs e)
@@ -253,12 +346,10 @@ namespace Server
             }
             
             txtMSG.Text = NegateBit(bits,FindRandomBitPlace());
-
         }
 
         private string NegateBit(string bits,int bitPlace)
         {
-
             char bitToNegate = bits[bitPlace];
 
             StringBuilder bitsModifiable = new StringBuilder(bits);
