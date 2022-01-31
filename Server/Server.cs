@@ -94,21 +94,7 @@ namespace Server
             bergerLabel.Text = "";
         }
 
-        private string GetPathToString(List<int> path)
-        {
-            string paths = "[";
-
-            foreach (var i in path)
-            {
-                paths += i;
-                paths += ',';
-            }
-
-            paths = paths.Remove(paths.Length - 1);
-            paths += ']';
-
-            return paths;
-        }
+    
         private void Form1_Load(object sender, EventArgs e)
         {
             
@@ -214,8 +200,6 @@ namespace Server
             return true;
         }
 
-      
-
         private void timer1_Tick(object sender, EventArgs e)
         {
            // backgroundWorker2.RunWorkerAsync();
@@ -224,9 +208,24 @@ namespace Server
 
         private void btnSend_Click(object sender, EventArgs e)
         {
+            string message = txtMSG.Text;
+            if(message.Length!=20)
+            {
+                WriteToTextLog("not a proper length");
+                return;
+            }
+            foreach (var c in message)
+            {
+                if(c!='0'&&c!='1')
+                {
+                    WriteToTextLog("only bits are allowed");
+                    return;
+                }              
+            }
+
+
             FullSendMessage(txtMSG.Text,txtPort.Text);
         }
-
         private void FullSendMessage(string txtMSGText,string txtPortText)
         {
             if (txtMSGText != "" && txtPortText != "")
@@ -241,9 +240,9 @@ namespace Server
                     return;
                 }
 
-                string portsPath = GetPathToString(Addresses.FindShortestPath(Port, destinationPort));
+                string portsPath = Addresses.GetPathToString(Addresses.FindShortestPath(Port, destinationPort));
 
-                int nextPort = GetFirstPort(portsPath);
+                int nextPort = Addresses.GetFirstPort(portsPath);
 
                 if (nextPort <= 0 || nextPort >= 9)
                 {
@@ -305,21 +304,21 @@ namespace Server
                     recieve = STR.ReadLine();
                     if (recieve.Contains("properMessage"))
                     {
-                        FullSendMessage(recieve, Addresses.MainPort.ToString());
-                        WriteToTextLog(recieve);
+                        FullSendMessage("properMessage", Addresses.MainPort.ToString());
+                        WriteToTextLog("recieved proper message ");
                         ReListen();
                         return;
                     }
-                    if (recieve.Contains("wrong number of ones - berger code not correct:"))
+                    if (recieve.Contains("wrong number of ones - berger code not correct"))
                     {
                         FullSendMessage("wrong number of ones - berger code not correct:", Addresses.MainPort.ToString());
-                        WriteToTextLog(recieve);
+                        WriteToTextLog("wrong number of ones - berger code not correct:");
                         ReListen();
                         return;
                     }
 
                     string path = GetFullPathFromMessage(recieve);
-                    string nextPath = GetDestinationPath(path);
+                    string nextPath = Addresses.GetDestinationPath(path);
                     string message = recieve.Substring(path.Length, (recieve.Length - path.Length));
 
 
@@ -327,12 +326,12 @@ namespace Server
                     {
                         if (IsToNegateBit)
                         {
-                            message = NegateBit(message);
+                            message = BergerHelper.NegateBit(message);
                         }
 
                         if (IsToSwapBits)
                         {
-                            message = SwapBits(message);
+                            message = BergerHelper.SwapBits(message,IncludeControlSum);
                         }
 
 
@@ -341,17 +340,9 @@ namespace Server
 
                         if (BergerHelper.CheckBergersCode(bytes) == false)
                         {
-
-
                             WriteToTextLog("wrong number of ones - berger code not correct");
-
-                            if (ConnectForSending(Addresses.MainPort) == false)
-                            {
-                                FullSendMessage(message, Addresses.MainPort.ToString());
-                            }
-
-                            SendMessage("wrong number of ones - berger code not correct: " + message);
-
+                            FullSendMessage("wrong number of ones - berger code not correct", Addresses.MainPort.ToString());
+                      
                             ReListen();
                             return;
                         }
@@ -367,7 +358,7 @@ namespace Server
 
                     recieve = "";
 
-                    int nextPort = GetFirstPort(nextPath);
+                    int nextPort = Addresses.GetFirstPort(nextPath);
 
                     if (nextPort != -1)
                     {
@@ -400,8 +391,6 @@ namespace Server
             }
         }
 
-
-
         private void WriteToTextLog(string message)
         {
             this.txtLogs.Invoke(new MethodInvoker(delegate ()
@@ -418,40 +407,7 @@ namespace Server
 
             return path;
         }
-        private string GetDestinationPath(string path)
-        {
-            string nextPath;
-
-            if (path.Length != 3)
-            {
-                nextPath = path.Remove(1, 2);
-            }
-            else
-            {
-                nextPath = path.Remove(1, 1);
-            }
-
-            return nextPath;
-        }
-
-        private int GetDestinationPort(string path)
-        {
-            if (path.Length <3)
-            {
-                return -1;
-            }
-            else return int.Parse(path[path.Length-2].ToString());
-        }
-
-        private int GetFirstPort(string path)
-        {
-            if (path.Length < 3)
-            {
-                return -1;
-            }
-            else return int.Parse(path[1].ToString());
-        }
-
+       
         private void btnConvert_Click(object sender, EventArgs e)
         {
 
@@ -480,57 +436,13 @@ namespace Server
 
 
             string bits = txtMSG.Text;
-            if (IsProperBinaryNumber(bits) == false)
+            if (BergerHelper.IsProperBinaryNumber(bits) == false)
             {
                 txtLogs.Text += "not a proper message" + Environment.NewLine;
                 return;
             }
             
-            txtMSG.Text = NegateBit(bits);
-        }
-
-        private string NegateBit(string bits)
-        {
-            int bitPlace = FindRandomBitPlace();
-
-            char bitToNegate = bits[bitPlace];
-
-            StringBuilder bitsModifiable = new StringBuilder(bits);
-
-            if (bitToNegate == '0')
-            {
-
-                bitsModifiable[bitPlace] = '1';
-            }
-            else if(bitToNegate =='1')
-            {
-
-                bitsModifiable[bitPlace] = '0';
-            }
-            else
-            {
-                throw new ArgumentException();
-            }
-
-            return bitsModifiable.ToString();
-        }
-
-        private bool IsProperBinaryNumber(string bits)
-        {
-            if (bits.Length != 20)
-            {
-                return false;
-            }
-
-            foreach (var bit in bits)
-            {
-                if (bit != '0' && bit != '1')
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            txtMSG.Text =BergerHelper.NegateBit(bits);
         }
 
         private void btnSwapBits_Click(object sender, EventArgs e)
@@ -544,90 +456,33 @@ namespace Server
             }
 
             string bits = txtMSG.Text;
-            if (IsProperBinaryNumber(bits) == false)
+            if (BergerHelper.IsProperBinaryNumber(bits) == false)
             {
                 txtLogs.Text += "not a proper message" + Environment.NewLine;
                 return;
             }
-            string message = SwapBits(bits);
+            string message = BergerHelper.SwapBits(bits,IncludeControlSum);
             if (message != String.Empty)
             {
                 txtMSG.Text = message;
             }
         }
 
-        private string SwapBits(string bits)
-        {
-            int zeroBitPlace;
-            int oneBitPlace;
-            try
-            {
-                zeroBitPlace = FindRandomSpecificBitPlace(bits, '0');
-                oneBitPlace = FindRandomSpecificBitPlace(bits, '1');
-
-            }
-            catch (ArgumentNullException exception)
-            {
-                txtLogs.Text += exception.Message + Environment.NewLine;
-                return String.Empty;
-            }
-
-            return SwapCharsInString(bits, zeroBitPlace, oneBitPlace);
-        }
-
-        private string SwapCharsInString(string bits,int zeroBitPlace, int oneBitPlace)
-        {
-            char zeroBit = bits[zeroBitPlace];
-            char oneBit = bits[oneBitPlace];
-
-            StringBuilder bitsModifiable = new StringBuilder(bits);
-            bitsModifiable[zeroBitPlace] = oneBit;
-            bitsModifiable[oneBitPlace] = zeroBit;
-
-            return bitsModifiable.ToString();
-        }
-
-        private int FindRandomSpecificBitPlace(string bits, char wantedBit)
-        {
-            int maxValue;
-            if (IncludeControlSum)
-            {
-                maxValue = 20;
-            }
-            else
-            {
-                maxValue = 16;
-            }
-            Random rnd = new Random();
-
-            if (bits.Contains(wantedBit))
-            {
-                while (true)
-                {
-                    int bitPlace = rnd.Next(0, maxValue);
-                    char properBit = bits[bitPlace];
-                    if (properBit == wantedBit)
-                    {
-                        return bitPlace;
-                    }
-                }
-
-            }
-
-            throw new ArgumentNullException("not able to properly swap bits because there is only one bit type");
-        }
-
-        private int FindRandomBitPlace()
-        {
-            Random rnd = new Random();
-            return rnd.Next(0, 20);
-        }
-
         private void btnCloseConnection_Click(object sender, EventArgs e)
         {
             IsConnectionClosed = !IsConnectionClosed;
-            isConnectionClosedLabel.Text = isConnectionClosedLabel.ToString();
-            StopConnection();
+            isConnectionClosedLabel.Text = IsConnectionClosed.ToString();
+            if (IsConnectionClosed == true)
+            {
+               
+                StopConnection();
+            }
+            else
+            {
+                listener.Start();
+                ReListen();
+            }
+            
         }
         private void StopConnection()
         {

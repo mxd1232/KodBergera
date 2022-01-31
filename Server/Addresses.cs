@@ -12,6 +12,46 @@ namespace Server
         public static string IpAddress = "127.0.0.1";
         public static int MainPort = 1;
 
+        public static string GetPathToString(List<int> path)
+        {
+            string paths = "[";
+
+            foreach (var i in path)
+            {
+                paths += i;
+                paths += ',';
+            }
+
+            paths = paths.Remove(paths.Length - 1);
+            paths += ']';
+
+            return paths;
+        }
+        public static string GetDestinationPath(string path)
+        {
+            string nextPath;
+
+            if (path.Length != 3)
+            {
+                nextPath = path.Remove(1, 2);
+            }
+            else
+            {
+                nextPath = path.Remove(1, 1);
+            }
+
+            return nextPath;
+        }
+
+        public static int GetFirstPort(string path)
+        {
+            if (path.Length < 3)
+            {
+                return -1;
+            }
+            else return int.Parse(path[1].ToString());
+        }
+
         public static List<int> GetConnections(int port)
         {
             if(port<1||port>8)
@@ -125,7 +165,7 @@ namespace Server
         public static int[] connections3 = new int[8] { 1, 1, 0, 1, 0, 1, 0, 0 }; //1,2,4
         public static int[] connections4 = new int[8] { 0, 0, 1, 0, 1, 0, 0, 0 }; //3,5
         public static int[] connections5 = new int[8] { 0, 0, 0, 1, 0, 1, 1, 0 }; //4,6,7
-        public static int[] connections6 = new int[8] { 0, 0, 1, 0, 1, 0, 0, 1 }; //5,8
+        public static int[] connections6 = new int[8] { 0, 0, 1, 0, 1, 0, 0, 1 }; //3,5,8
         public static int[] connections7 = new int[8] { 0, 0, 0, 0, 1, 0, 0, 0 }; //5
         public static int[] connections8 = new int[8] { 0, 0, 0, 0, 0, 1, 0, 0 }; //6
 

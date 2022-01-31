@@ -157,66 +157,111 @@ namespace BergerBackend
 
             return codedData;
         }
-        //public static int[] CodeBerger(int[] bytes)
-        //{
-        //    if (bytes.Length != 16)
-        //    {
-        //        throw new ArgumentException();
-        //    }
+        public static string NegateBit(string bits)
+        {
+            int bitPlace = FindRandomBitPlace();
 
-        //    int[] codedData = new int[20];
-        //    short numberOfOnes = 0;
+            char bitToNegate = bits[bitPlace];
 
-        //    for (int i = 0; i < 16; i++)
-        //    {
-        //        codedData[i] = bytes[i];
-        //        if (codedData[i] == 1)
-        //        {
-        //            numberOfOnes++;
-        //        }
-        //    }
+            StringBuilder bitsModifiable = new StringBuilder(bits);
 
-        //    int[] controlBytes = convertToBinary(numberOfOnes);
+            if (bitToNegate == '0')
+            {
 
-        //    for (int i = 0; i < 4; i++)
-        //    {
-        //        codedData[i + 16] = controlBytes[3-i];
-        //    }
+                bitsModifiable[bitPlace] = '1';
+            }
+            else if (bitToNegate == '1')
+            {
 
-        //    return codedData;
-        //}
+                bitsModifiable[bitPlace] = '0';
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
 
-        //private static int[] convertToBinary(short n)
-        //{
-        //    if (n == 16)
-        //    {
-        //        n = 0;
-        //    }
+            return bitsModifiable.ToString();
+        }
+        public static bool IsProperBinaryNumber(string bits)
+        {
+            if (bits.Length != 20)
+            {
+                return false;
+            }
 
-        //    if (n > 15 || n < 0)
-        //    {
-        //        throw new ArgumentException();
-        //    }
+            foreach (var bit in bits)
+            {
+                if (bit != '0' && bit != '1')
+                {
+                    return false;
+                }
+            }
 
-        //    Stack<short> stack = new Stack<short>();
-        //    stack.Push(n);
-        //    int[] bytes = new int[4];
-        //    // step 1 : Push the element on the stack
-        //    while (n > 1)
-        //    {
-        //        n = (short)(n / 2);
-        //        stack.Push(n);
-        //    }
+            return true;
+        }
+        public static string SwapBits(string bits, bool includeControlSum)
+        {
+            int zeroBitPlace;
+            int oneBitPlace;
+            try
+            {
+                zeroBitPlace = FindRandomSpecificBitPlace(bits, '0', includeControlSum);
+                oneBitPlace = FindRandomSpecificBitPlace(bits, '1', includeControlSum);
 
-        //    int i = 0;
-        //    // step 2 : Pop the element and print the value
-        //    foreach (var val in stack)
-        //    {
-        //        bytes[i] = val % 2;
-        //        i++;
-        //    }
+            }
+            catch (ArgumentNullException exception)
+            {
+                return String.Empty;
+            }
 
-        //    return bytes;
-        //}
+            return SwapCharsInString(bits, zeroBitPlace, oneBitPlace);
+        }
+        private static string SwapCharsInString(string bits, int zeroBitPlace, int oneBitPlace)
+        {
+            char zeroBit = bits[zeroBitPlace];
+            char oneBit = bits[oneBitPlace];
+
+            StringBuilder bitsModifiable = new StringBuilder(bits);
+            bitsModifiable[zeroBitPlace] = oneBit;
+            bitsModifiable[oneBitPlace] = zeroBit;
+
+            return bitsModifiable.ToString();
+        }
+
+        private static int FindRandomSpecificBitPlace(string bits, char wantedBit,bool includeControlSum)
+        {
+            int maxValue;
+            if (includeControlSum)
+            {
+                maxValue = 20;
+            }
+            else
+            {
+                maxValue = 16;
+            }
+            Random rnd = new Random();
+
+            if (bits.Contains(wantedBit))
+            {
+                while (true)
+                {
+                    int bitPlace = rnd.Next(0, maxValue);
+                    char properBit = bits[bitPlace];
+                    if (properBit == wantedBit)
+                    {
+                        return bitPlace;
+                    }
+                }
+
+            }
+
+            throw new ArgumentNullException("not able to properly swap bits because there is only one bit type");
+        }
+
+        private static int FindRandomBitPlace()
+        {
+            Random rnd = new Random();
+            return rnd.Next(0, 20);
+        }
     }
 }

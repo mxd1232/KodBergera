@@ -38,17 +38,11 @@ namespace BergerTests
 
             Assert.Throws<ArgumentException>(() => BergerHelper.CheckBergersCode(input));
         }  
-        //[Fact]
-        //public void WrongLengthCodeBergersThrowsArgumentException()
-        //{
-        //    int[] input = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-        //    Assert.Throws<ArgumentException>(() => BergerHelper.CodeBerger(input));
-        //}
         [Fact]
         public void ConvertNumberToBinaryReturnsProperArray()
         {
            
-            int[] tenInBinary = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,0,1,0};
+            int[] tenInBinary = {0,1,0,1};
 
             int[] result = BergerHelper.ConvertShortToBinary(10);
 
