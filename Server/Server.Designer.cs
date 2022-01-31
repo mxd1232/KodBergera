@@ -1,4 +1,6 @@
-﻿namespace Server
+﻿using System.Windows.Forms;
+
+namespace Server
 {
     partial class Server
     {
@@ -13,10 +15,13 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
+            this.BeginInvoke(new MethodInvoker(listener.Server.Dispose));
+            
             if (disposing && (components != null))
             {
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
@@ -28,28 +33,32 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.IPLabel = new System.Windows.Forms.Label();
             this.PortLabel = new System.Windows.Forms.Label();
             this.txtPort = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.lblStatus = new System.Windows.Forms.Label();
             this.txtLogs = new System.Windows.Forms.TextBox();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            this.backgroundWorker2 = new System.ComponentModel.BackgroundWorker();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.recieverWorker = new System.ComponentModel.BackgroundWorker();
+            this.senderWorker = new System.ComponentModel.BackgroundWorker();
             this.txtMSG = new System.Windows.Forms.TextBox();
             this.btnSend = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
+            this.numberLabel = new System.Windows.Forms.Label();
             this.Connections = new System.Windows.Forms.ListBox();
             this.logsLabel = new System.Windows.Forms.Label();
             this.connectionsLabel = new System.Windows.Forms.Label();
             this.DestinationPort = new System.Windows.Forms.Label();
             this.convertableNumberBox = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.bergerLabel = new System.Windows.Forms.Label();
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnNegateOneBit = new System.Windows.Forms.Button();
             this.btnSwapBits = new System.Windows.Forms.Button();
+            this.btnCloseConnection = new System.Windows.Forms.Button();
+            this.isNegatedLabel = new System.Windows.Forms.Label();
+            this.isSwapedLabel = new System.Windows.Forms.Label();
+            this.btnControlSum = new System.Windows.Forms.Button();
+            this.controlSumLabel = new System.Windows.Forms.Label();
+            this.isConnectionClosedLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // IPLabel
@@ -109,18 +118,15 @@
             this.txtLogs.Size = new System.Drawing.Size(421, 195);
             this.txtLogs.TabIndex = 7;
             // 
-            // backgroundWorker1
+            // recieverWorker
             // 
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.recieverWorker.WorkerSupportsCancellation = true;
+            this.recieverWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.recieverWorker_DoWork);
             // 
-            // backgroundWorker2
+            // senderWorker
             // 
-            this.backgroundWorker2.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker2_DoWork);
-            // 
-            // timer1
-            // 
-            this.timer1.Interval = 1000;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            this.senderWorker.WorkerSupportsCancellation = true;
+            this.senderWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.senderWorker_DoWork);
             // 
             // txtMSG
             // 
@@ -142,15 +148,15 @@
             this.btnSend.UseVisualStyleBackColor = true;
             this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
             // 
-            // label4
+            // numberLabel
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(23, 191);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(145, 17);
-            this.label4.TabIndex = 22;
-            this.label4.Text = "Short number to send";
+            this.numberLabel.AutoSize = true;
+            this.numberLabel.Location = new System.Drawing.Point(23, 191);
+            this.numberLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.numberLabel.Name = "numberLabel";
+            this.numberLabel.Size = new System.Drawing.Size(145, 17);
+            this.numberLabel.TabIndex = 22;
+            this.numberLabel.Text = "Short number to send";
             // 
             // Connections
             // 
@@ -188,9 +194,9 @@
             this.DestinationPort.Location = new System.Drawing.Point(23, 117);
             this.DestinationPort.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.DestinationPort.Name = "DestinationPort";
-            this.DestinationPort.Size = new System.Drawing.Size(34, 17);
+            this.DestinationPort.Size = new System.Drawing.Size(105, 17);
             this.DestinationPort.TabIndex = 26;
-            this.DestinationPort.Text = "Port";
+            this.DestinationPort.Text = "DestinationPort";
             // 
             // convertableNumberBox
             // 
@@ -200,15 +206,15 @@
             this.convertableNumberBox.Size = new System.Drawing.Size(81, 22);
             this.convertableNumberBox.TabIndex = 27;
             // 
-            // label1
+            // bergerLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(367, 263);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(152, 17);
-            this.label1.TabIndex = 28;
-            this.label1.Text = "number in berger code";
+            this.bergerLabel.AutoSize = true;
+            this.bergerLabel.Location = new System.Drawing.Point(367, 263);
+            this.bergerLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.bergerLabel.Name = "bergerLabel";
+            this.bergerLabel.Size = new System.Drawing.Size(152, 17);
+            this.bergerLabel.TabIndex = 28;
+            this.bergerLabel.Text = "number in berger code";
             // 
             // btnConvert
             // 
@@ -223,10 +229,10 @@
             // 
             // btnNegateOneBit
             // 
-            this.btnNegateOneBit.Location = new System.Drawing.Point(565, 254);
+            this.btnNegateOneBit.Location = new System.Drawing.Point(554, 254);
             this.btnNegateOneBit.Margin = new System.Windows.Forms.Padding(4);
             this.btnNegateOneBit.Name = "btnNegateOneBit";
-            this.btnNegateOneBit.Size = new System.Drawing.Size(142, 28);
+            this.btnNegateOneBit.Size = new System.Drawing.Size(153, 28);
             this.btnNegateOneBit.TabIndex = 30;
             this.btnNegateOneBit.Text = "Negate One Bit";
             this.btnNegateOneBit.UseVisualStyleBackColor = true;
@@ -237,27 +243,96 @@
             this.btnSwapBits.Location = new System.Drawing.Point(715, 254);
             this.btnSwapBits.Margin = new System.Windows.Forms.Padding(4);
             this.btnSwapBits.Name = "btnSwapBits";
-            this.btnSwapBits.Size = new System.Drawing.Size(142, 28);
+            this.btnSwapBits.Size = new System.Drawing.Size(153, 28);
             this.btnSwapBits.TabIndex = 31;
             this.btnSwapBits.Text = "Swap Bits";
             this.btnSwapBits.UseVisualStyleBackColor = true;
             this.btnSwapBits.Click += new System.EventHandler(this.btnSwapBits_Click);
             // 
+            // btnCloseConnection
+            // 
+            this.btnCloseConnection.Location = new System.Drawing.Point(880, 254);
+            this.btnCloseConnection.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCloseConnection.Name = "btnCloseConnection";
+            this.btnCloseConnection.Size = new System.Drawing.Size(142, 28);
+            this.btnCloseConnection.TabIndex = 32;
+            this.btnCloseConnection.Text = "Close Connection";
+            this.btnCloseConnection.UseVisualStyleBackColor = true;
+            this.btnCloseConnection.Click += new System.EventHandler(this.btnCloseConnection_Click);
+            // 
+            // isNegatedLabel
+            // 
+            this.isNegatedLabel.AutoSize = true;
+            this.isNegatedLabel.Location = new System.Drawing.Point(615, 290);
+            this.isNegatedLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.isNegatedLabel.Name = "isNegatedLabel";
+            this.isNegatedLabel.Size = new System.Drawing.Size(38, 17);
+            this.isNegatedLabel.TabIndex = 33;
+            this.isNegatedLabel.Text = "false";
+            // 
+            // isSwapedLabel
+            // 
+            this.isSwapedLabel.AutoSize = true;
+            this.isSwapedLabel.Location = new System.Drawing.Point(768, 286);
+            this.isSwapedLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.isSwapedLabel.Name = "isSwapedLabel";
+            this.isSwapedLabel.Size = new System.Drawing.Size(38, 17);
+            this.isSwapedLabel.TabIndex = 34;
+            this.isSwapedLabel.Text = "false";
+            // 
+            // btnControlSum
+            // 
+            this.btnControlSum.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnControlSum.Location = new System.Drawing.Point(715, 307);
+            this.btnControlSum.Margin = new System.Windows.Forms.Padding(4);
+            this.btnControlSum.Name = "btnControlSum";
+            this.btnControlSum.Size = new System.Drawing.Size(153, 28);
+            this.btnControlSum.TabIndex = 35;
+            this.btnControlSum.Text = "Include Control Sum";
+            this.btnControlSum.UseVisualStyleBackColor = false;
+            this.btnControlSum.Click += new System.EventHandler(this.btnControlSum_Click);
+            // 
+            // controlSumLabel
+            // 
+            this.controlSumLabel.AutoSize = true;
+            this.controlSumLabel.Location = new System.Drawing.Point(768, 343);
+            this.controlSumLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.controlSumLabel.Name = "controlSumLabel";
+            this.controlSumLabel.Size = new System.Drawing.Size(38, 17);
+            this.controlSumLabel.TabIndex = 36;
+            this.controlSumLabel.Text = "false";
+            // 
+            // isConnectionClosedLabel
+            // 
+            this.isConnectionClosedLabel.AutoSize = true;
+            this.isConnectionClosedLabel.Location = new System.Drawing.Point(938, 286);
+            this.isConnectionClosedLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.isConnectionClosedLabel.Name = "isConnectionClosedLabel";
+            this.isConnectionClosedLabel.Size = new System.Drawing.Size(38, 17);
+            this.isConnectionClosedLabel.TabIndex = 37;
+            this.isConnectionClosedLabel.Text = "false";
+            // 
             // Server
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1315, 331);
+            this.ClientSize = new System.Drawing.Size(1315, 369);
+            this.Controls.Add(this.isConnectionClosedLabel);
+            this.Controls.Add(this.controlSumLabel);
+            this.Controls.Add(this.btnControlSum);
+            this.Controls.Add(this.isSwapedLabel);
+            this.Controls.Add(this.isNegatedLabel);
+            this.Controls.Add(this.btnCloseConnection);
             this.Controls.Add(this.btnSwapBits);
             this.Controls.Add(this.btnNegateOneBit);
             this.Controls.Add(this.btnConvert);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.bergerLabel);
             this.Controls.Add(this.convertableNumberBox);
             this.Controls.Add(this.DestinationPort);
             this.Controls.Add(this.connectionsLabel);
             this.Controls.Add(this.logsLabel);
             this.Controls.Add(this.Connections);
-            this.Controls.Add(this.label4);
+            this.Controls.Add(this.numberLabel);
             this.Controls.Add(this.txtMSG);
             this.Controls.Add(this.btnSend);
             this.Controls.Add(this.txtLogs);
@@ -282,21 +357,26 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.TextBox txtLogs;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
-        private System.ComponentModel.BackgroundWorker backgroundWorker2;
+        private System.ComponentModel.BackgroundWorker recieverWorker;
+        private System.ComponentModel.BackgroundWorker senderWorker;
         private System.Windows.Forms.TextBox txtMSG;
         private System.Windows.Forms.Button btnSend;
-        private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label numberLabel;
         private System.Windows.Forms.ListBox Connections;
         private System.Windows.Forms.Label logsLabel;
         private System.Windows.Forms.Label connectionsLabel;
         private System.Windows.Forms.Label DestinationPort;
         private System.Windows.Forms.TextBox convertableNumberBox;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label bergerLabel;
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnNegateOneBit;
         private System.Windows.Forms.Button btnSwapBits;
+        private Button btnCloseConnection;
+        private Label isNegatedLabel;
+        private Label isSwapedLabel;
+        private Button btnControlSum;
+        private Label controlSumLabel;
+        private Label isConnectionClosedLabel;
     }
 }
 

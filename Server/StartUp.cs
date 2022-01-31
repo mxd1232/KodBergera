@@ -20,10 +20,15 @@ namespace Server
 
         private void StartUp_Load(object sender, EventArgs e)
         {
-            for (int i =1; i < 9; i++)
+           
+        }
+
+        private void startProgram_Click(object sender, EventArgs e)
+        {
+            for (int i = 1; i < 9; i++)
             {
-                servers.Add( new Server(i));
-                servers[i-1].Show();
+                servers.Add(new Server(i));
+                servers[i - 1].Show();
             }
         }
     }

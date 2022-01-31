@@ -1,0 +1,23 @@
+  
+ Grafowa topologia Gwiazdy.
+  
+  
+  
+  Kod Bergera
+Kody Bergera wykrywają dowolną liczbę jednokierunkowych błędów. Dla danego słowa kodowego , jeśli jedynymi błędami, które wystąpiły, jest to, że niektóre (lub wszystkie) bity o wartości 1 zmieniły się na wartość 0, to transformacja ta zostanie wykryta przez implementację kodu Bergera. Aby zrozumieć dlaczego, weź pod uwagę trzy takie przypadki:
+
+      1. Niektóre bity 1 w części informacyjnej słowa kodowego zmieniły się na 0s.
+      2. Niektóre bity jedynek w części kontrolnej (lub nadmiarowej ) słowa kodowego zmieniły się na zerowe.
+      3. Niektóre bity jedynek w części informacyjnej i kontrolnej zmieniły się na zera.
+
+W przypadku 1. liczba bitów o wartości 0 w sekcji informacyjnej, z definicji błędu, wzrośnie. Dlatego nasz kod kontrolny Bergera będzie niższy niż rzeczywista liczba bitów 0 dla danych, a więc sprawdzenie się nie powiedzie.
+
+W przypadku 2. liczba bitów o wartości 0 w sekcji informacyjnej pozostała taka sama, ale zmieniła się wartość danych kontrolnych. Ponieważ wiemy, że niektóre jedynki zamieniły się w zera, ale żadne zera nie zamieniły się w jedynki (tak zdefiniowaliśmy model błędu w tym przypadku), zakodowana wartość binarna danych kontrolnych spadnie (np. z binarnego 1011 do 1010 lub do 1001 lub 0011). Ponieważ dane informacyjne pozostały takie same, mają taką samą liczbę zer, jak wcześniej, a to nie będzie już odpowiadać zmutowanej wartości kontrolnej.
+ 
+W przypadku 3. w którym zmieniły się bity zarówno w sekcji informacyjnej, jak i kontrolnej, zauważ, że liczba zer w sekcji informacyjnej wzrosła , jak opisano w przypadku 1, a wartość binarna przechowywana w sekcji kontrolnej spadła , tak jak opisano w przypadku 2. Dlatego nie ma szans, że oba te mutacje ostatecznie zmutują się w taki sposób, że staną się innym prawidłowym słowem kodowym.
+ 
+Podobną analizę można przeprowadzić i jest ona całkowicie poprawna w przypadku, gdy jedyne błędy, które występują, to zmiana niektórych bitów o wartości 0 na 1. Dlatego też, jeśli wszystkie błędy występujące w określonym słowie kodowym występują w tym samym kierunku , te błędy zostaną wykryte. Dla następnego przesyłanego słowa kodowego (na przykład), błędy mogą iść w przeciwnym kierunku i nadal będą wykrywane, o ile wszystkie idą w tym samym kierunku co inne.
+ 
+Błędy jednokierunkowe są powszechne w niektórych sytuacjach. Na przykład w pamięci flash bity można łatwiej zaprogramować na 0 niż zresetować na 1.
+
+Źródło: https://gaz.wiki/wiki/pl/Berger_code

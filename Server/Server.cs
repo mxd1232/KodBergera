@@ -22,6 +22,12 @@ namespace Server
         public StreamWriter STW;
         public string recieve;
         public String TextToSend;
+        
+        public bool IsToNegateBit { get; set; } = false;
+        public bool IsConnectionClosed { get; set; } = false;
+
+        public bool IncludeControlSum { get; set; } = false;
+        public bool IsToSwapBits { get; set; } = false;
         public int Port { get; set; }
       //  public string PortsPath { get; set; }
 
@@ -31,8 +37,8 @@ namespace Server
             Port = port;
             InitializeComponent();
 
-            backgroundWorker1.WorkerSupportsCancellation = true;
-            backgroundWorker2.WorkerSupportsCancellation = true;
+            recieverWorker.WorkerSupportsCancellation = true;
+            senderWorker.WorkerSupportsCancellation = true;
 
             IPLabel.Text = "Ip: " + Addresses.IpAddress;
             PortLabel.Text = "Port: " + port;
@@ -43,13 +49,49 @@ namespace Server
             }
 
             Console.WriteLine("Port:" + Port);
-            
 
-
+            if (Port != Addresses.MainPort)
+            {
+                removeUnnecesseryButtons();
+            }
 
             StartListening();
+        }
 
+        private void removeUnnecesseryButtons()
+        {
+            btnSend.Enabled = false;
+            btnSend.Size = new Size(new Point(0, 0));
 
+            btnConvert.Enabled = false;
+            btnConvert.Size = new Size(new Point(0, 0));
+
+           // btnNegateOneBit.Enabled = false;
+           // btnNegateOneBit.Size = new Size(new Point(0, 0));
+
+         //   btnSwapBits.Enabled = false;
+          //  btnSwapBits.Size = new Size(new Point(0, 0));
+
+            txtMSG.Enabled = false;
+            txtMSG.Size = new Size(new Point(0, 0));
+
+            txtPort.Enabled = false;
+            txtPort.Size = new Size(new Point(0, 0));
+
+            convertableNumberBox.Enabled = false;
+            convertableNumberBox.Size = new Size(new Point(0, 0));
+
+            DestinationPort.Enabled = false;
+            DestinationPort.Size = new Size(new Point(0, 0));
+            DestinationPort.Text = "";
+
+            numberLabel.Enabled = false;
+            numberLabel.Size = new Size(new Point(0, 0));
+            numberLabel.Text = "";
+
+            bergerLabel.Enabled = false;
+            bergerLabel.Size = new Size(new Point(0, 0));
+            bergerLabel.Text = "";
         }
 
         private string GetPathToString(List<int> path)
@@ -84,14 +126,22 @@ namespace Server
                 STW = new StreamWriter(client.GetStream());
                 STW.AutoFlush = true;
 
-                backgroundWorker1.RunWorkerAsync();
+                recieverWorker.RunWorkerAsync();
              //   lblStatus.Text = "";
              //   txtLogs.Text += "";
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "Error";
-                txtLogs.Text += "Server could not connect>>>"+ Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+                this.lblStatus.Invoke(new MethodInvoker(delegate ()
+                {
+                    lblStatus.Text = "Error";
+                }));
+                //this.txtLogs.Invoke(new MethodInvoker(delegate ()
+                //{
+                //    txtLogs.Text += "Server could not connect>>>" + Environment.NewLine;
+
+                //}));
+                listener.Stop();
             }
         }
 
@@ -106,25 +156,32 @@ namespace Server
                 STW = new StreamWriter(client.GetStream());
                 STW.AutoFlush = true;
 
-                if (backgroundWorker1.IsBusy)
+                if (recieverWorker.IsBusy)
                 {
-                    backgroundWorker1.CancelAsync();
+                    recieverWorker.CancelAsync();
                 }
-                backgroundWorker1.RunWorkerAsync();
+                recieverWorker.RunWorkerAsync();
 
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "Error";
-                txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+                this.lblStatus.Invoke(new MethodInvoker(delegate ()
+                {
+                    lblStatus.Text = "Error";
+                }));
+                this.txtLogs.Invoke(new MethodInvoker(delegate ()
+                {
+                    txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+
+                }));
             }
         }
 
-        private void ConnectForSending(int port)
+        private bool ConnectForSending(int port)
         {
             client = new TcpClient();
             IPEndPoint IpEnd = new IPEndPoint(IPAddress.Parse(Addresses.IpAddress), port);
-         //   PortsPath = GetPathToString(Addresses.FindShortestPath(Port, port));
+            //   PortsPath = GetPathToString(Addresses.FindShortestPath(Port, port));
 
             try
             {
@@ -135,33 +192,29 @@ namespace Server
                     STW = new StreamWriter(client.GetStream());
                     STR = new StreamReader(client.GetStream());
                     STW.AutoFlush = true;
-                    
+
                 }
                 else
                 {
-                 //   txtLogs.Text += "Client did not connect" + Environment.NewLine;
+                    //   txtLogs.Text += "Client did not connect" + Environment.NewLine;
                 }
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "Error";
-                txtLogs.Text += "Client could not connect>>>"+ Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+                
+                // lblStatus.Text = "Error";
+                this.txtLogs.Invoke(new MethodInvoker(delegate ()
+                {
+                    txtLogs.Text += "Server with port: [" + port + "] stoped working";
+                }));
+                return false;
+                //txtLogs.Text += "Client could not connect>>>"+ Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
             }
+
+            return true;
         }
 
-        private void StopConnection()
-        {
-            try
-            {
-                listener.Stop();
-            }
-            catch (Exception ex)
-            {
-                lblStatus.Text = "Error";
-                txtLogs.Text += "Server could not disconnect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
-
-            }
-        }
+      
 
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -171,12 +224,20 @@ namespace Server
 
         private void btnSend_Click(object sender, EventArgs e)
         {
+            FullSendMessage(txtMSG.Text,txtPort.Text);
+        }
 
-            if (txtMSG.Text != "" && txtPort.Text != "")
+        private void FullSendMessage(string txtMSGText,string txtPortText)
+        {
+            if (txtMSGText != "" && txtPortText != "")
             {
-                int destinationPort = Convert.ToInt32(txtPort.Text);
-                if (destinationPort <= 0|| destinationPort >= 9)
+                int destinationPort = Convert.ToInt32(txtPortText);
+                if (destinationPort <= 0 || destinationPort >= 9)
                 {
+                    this.txtLogs.Invoke(new MethodInvoker(delegate ()
+                    {
+                        txtLogs.Text += "Wrong destination" + Environment.NewLine;
+                    }));
                     return;
                 }
 
@@ -188,11 +249,22 @@ namespace Server
                 {
                     return;
                 }
-                ConnectForSending(nextPort);
 
-                SendMessage(portsPath+txtMSG.Text);
+                if (ConnectForSending(nextPort) == false)
+                {
+                    if (Port == Addresses.MainPort)
+                    {
+                        this.txtLogs.Invoke(new MethodInvoker(delegate()
+                        {
+                            txtLogs.Text += "Connection Not working (socket not running)" + Environment.NewLine;
+                        }));
+                            return;
+                    }
+                    FullSendMessage(txtMSGText,Addresses.MainPort.ToString());
+                }
+
+                SendMessage(portsPath + txtMSGText);
             }
-            txtMSG.Text = "";
         }
 
         private void SendMessage( string message)
@@ -201,12 +273,12 @@ namespace Server
 
             TextToSend = message;
 
-            backgroundWorker2.RunWorkerAsync();
-            backgroundWorker2.CancelAsync();
+            senderWorker.RunWorkerAsync();
+            senderWorker.CancelAsync();
         }
 
         //send
-        private void backgroundWorker2_DoWork(object sender, DoWorkEventArgs e)
+        private void senderWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             if (client.Connected)
             {
@@ -216,66 +288,126 @@ namespace Server
                 this.txtLogs.Invoke(new MethodInvoker(delegate ()
                 {
                     txtLogs.AppendText(message + Environment.NewLine);
-                    lblStatus.Text = "connected - sent";
+                   // lblStatus.Text = "connected - sent";
                 }));
             }
-
-      //    StopConnection();
 
             ReListen();
         }
 
         //recieve
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        private void recieverWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             while (client.Connected)
             {
                 try
                 {
                     recieve = STR.ReadLine();
-
-                    string path = GetFullPathFromMessage(recieve);
-                    string nextPath = GetDestinationPath(path);
-                    //   PortsPath = nextPath;
-
-                    string message = recieve.Substring(path.Length, (recieve.Length - path.Length));
-
-                    int[] bytes = BergerHelper.ConvertStringToBinary(message);
-
-                    if (BergerHelper.CheckBergersCode(bytes) == false)
+                    if (recieve.Contains("properMessage"))
                     {
-                        this.txtLogs.Invoke(new MethodInvoker(delegate()
-                        {
-                            txtLogs.AppendText("wrong number of ones - berger code not correct");
-                        }));
+                        FullSendMessage(recieve, Addresses.MainPort.ToString());
+                        WriteToTextLog(recieve);
+                        ReListen();
+                        return;
+                    }
+                    if (recieve.Contains("wrong number of ones - berger code not correct:"))
+                    {
+                        FullSendMessage("wrong number of ones - berger code not correct:", Addresses.MainPort.ToString());
+                        WriteToTextLog(recieve);
+                        ReListen();
                         return;
                     }
 
-                    this.txtLogs.Invoke(new MethodInvoker(delegate()
+                    string path = GetFullPathFromMessage(recieve);
+                    string nextPath = GetDestinationPath(path);
+                    string message = recieve.Substring(path.Length, (recieve.Length - path.Length));
+
+
+                    if (message.Contains("errorSocket") == false)
                     {
-                        txtLogs.AppendText("Recieved: [path]: " + nextPath + "[message]: " + message +
-                                           Environment.NewLine);
+                        if (IsToNegateBit)
+                        {
+                            message = NegateBit(message);
+                        }
+
+                        if (IsToSwapBits)
+                        {
+                            message = SwapBits(message);
+                        }
+
+
+
+                        int[] bytes = BergerHelper.ConvertStringToBinary(message);
+
+                        if (BergerHelper.CheckBergersCode(bytes) == false)
+                        {
+
+
+                            WriteToTextLog("wrong number of ones - berger code not correct");
+
+                            if (ConnectForSending(Addresses.MainPort) == false)
+                            {
+                                FullSendMessage(message, Addresses.MainPort.ToString());
+                            }
+
+                            SendMessage("wrong number of ones - berger code not correct: " + message);
+
+                            ReListen();
+                            return;
+                        }
+                    }
+                    WriteToTextLog("Recieved: " + nextPath + message +
+                                   Environment.NewLine);
+
+
+                    this.lblStatus.Invoke(new MethodInvoker(delegate ()
+                    {
                         lblStatus.Text = "connected";
                     }));
+
                     recieve = "";
 
                     int nextPort = GetFirstPort(nextPath);
 
                     if (nextPort != -1)
                     {
-                        ConnectForSending(nextPort);
-                        SendMessage(nextPath + message);
+                        if (ConnectForSending(nextPort) == false)
+                        {
+                            FullSendMessage("errorSocket["+nextPort+"]" + message, Addresses.MainPort.ToString());
+                        }
+                        else
+                        {
+                            SendMessage(nextPath + message);
+                        }
+                    }
+                    else
+                    {
+                        FullSendMessage("properMessage" + message, Addresses.MainPort.ToString());
                     }
                     ReListen();
                     return;
                 }
                 catch (Exception ex)
                 {
-                    lblStatus.Text = "Error";
-                    txtLogs.Text += "Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() +
-                                    Environment.NewLine;
+                 //   WriteToTextLog("Server could not connect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine);
+                   
+                    this.lblStatus.Invoke(new MethodInvoker(delegate ()
+                    {
+                        lblStatus.Text = "Error";
+                    }));
+                    ReListen();
                 }
             }
+        }
+
+
+
+        private void WriteToTextLog(string message)
+        {
+            this.txtLogs.Invoke(new MethodInvoker(delegate ()
+            {
+                txtLogs.AppendText(message);
+            }));
         }
 
         private string GetFullPathFromMessage(string message)
@@ -322,6 +454,7 @@ namespace Server
 
         private void btnConvert_Click(object sender, EventArgs e)
         {
+
             Int16.TryParse(convertableNumberBox.Text, out short result);
 
             if (result != null)
@@ -338,6 +471,14 @@ namespace Server
 
         private void btnNegateOneBit_Click(object sender, EventArgs e)
         {
+            if(Port!=Addresses.MainPort)
+            {
+                IsToNegateBit = !IsToNegateBit;
+                isNegatedLabel.Text = IsToNegateBit.ToString();
+                return;
+            }
+
+
             string bits = txtMSG.Text;
             if (IsProperBinaryNumber(bits) == false)
             {
@@ -345,11 +486,13 @@ namespace Server
                 return;
             }
             
-            txtMSG.Text = NegateBit(bits,FindRandomBitPlace());
+            txtMSG.Text = NegateBit(bits);
         }
 
-        private string NegateBit(string bits,int bitPlace)
+        private string NegateBit(string bits)
         {
+            int bitPlace = FindRandomBitPlace();
+
             char bitToNegate = bits[bitPlace];
 
             StringBuilder bitsModifiable = new StringBuilder(bits);
@@ -392,20 +535,28 @@ namespace Server
 
         private void btnSwapBits_Click(object sender, EventArgs e)
         {
+            
+            if (Port != Addresses.MainPort)
+            {
+                IsToSwapBits = !IsToSwapBits;
+                isSwapedLabel.Text = IsToSwapBits.ToString();
+                return;
+            }
+
             string bits = txtMSG.Text;
             if (IsProperBinaryNumber(bits) == false)
             {
                 txtLogs.Text += "not a proper message" + Environment.NewLine;
                 return;
             }
-            string message = swapBits(bits);
+            string message = SwapBits(bits);
             if (message != String.Empty)
             {
                 txtMSG.Text = message;
             }
         }
 
-        private string swapBits(string bits)
+        private string SwapBits(string bits)
         {
             int zeroBitPlace;
             int oneBitPlace;
@@ -438,13 +589,22 @@ namespace Server
 
         private int FindRandomSpecificBitPlace(string bits, char wantedBit)
         {
+            int maxValue;
+            if (IncludeControlSum)
+            {
+                maxValue = 20;
+            }
+            else
+            {
+                maxValue = 16;
+            }
             Random rnd = new Random();
 
             if (bits.Contains(wantedBit))
             {
                 while (true)
                 {
-                    int bitPlace = rnd.Next(0, 20);
+                    int bitPlace = rnd.Next(0, maxValue);
                     char properBit = bits[bitPlace];
                     if (properBit == wantedBit)
                     {
@@ -461,6 +621,32 @@ namespace Server
         {
             Random rnd = new Random();
             return rnd.Next(0, 20);
+        }
+
+        private void btnCloseConnection_Click(object sender, EventArgs e)
+        {
+            IsConnectionClosed = !IsConnectionClosed;
+            isConnectionClosedLabel.Text = isConnectionClosedLabel.ToString();
+            StopConnection();
+        }
+        private void StopConnection()
+        {
+            try
+            {
+                listener.Stop();
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Error";
+              //  txtLogs.Text += "Server could not disconnect>>>" + Environment.NewLine + ex.Message.ToString() + Environment.NewLine;
+
+            }
+        }
+
+        private void btnControlSum_Click(object sender, EventArgs e)
+        {
+            IncludeControlSum = !IncludeControlSum;
+            controlSumLabel.Text = IncludeControlSum.ToString();
         }
     }
 }
